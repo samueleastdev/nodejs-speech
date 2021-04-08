@@ -15,30 +15,10 @@
 """This script is used to synthesize generated parts of this library."""
 
 import synthtool as s
-import synthtool.gcp as gcp
 import synthtool.languages.node as node
-import logging
+from pathlib import Path
 
-logging.basicConfig(level=logging.DEBUG)
-
-AUTOSYNTH_MULTIPLE_COMMITS = True
-
-
-gapic = gcp.GAPICBazel()
-common_templates = gcp.CommonTemplates()
-
-versions = ['v1p1beta1', 'v1']
-name = 'speech'
-
-for version in versions:
-    library = gapic.node_library(name, version)
-
-    # skip index, protos, package.json, and README.md
-    s.copy(
-        library,
-        excludes=['package.json', 'src/index.ts',]
-    )
-
+def patch(library: Path):
     # Manual helper methods override the streaming API so that it
     # accepts streamingConfig when calling streamingRecognize.
     # Rename the generated methods to avoid confusion.
@@ -50,6 +30,12 @@ for version in versions:
         '// eslint-disable-next-line @typescript-eslint/no-empty-interface\n' +
         'export interface SpeechClient extends ImprovedStreamingClient {}\n'
     )
+
+node.owlbot_main(
+        staging_excludes=['package.json', 'src/index.ts'],
+
+    )
+
 
 templates = common_templates.node_library(source_location='build/src')
 s.copy(templates)
